@@ -18,11 +18,11 @@
 
 #define CE_PIN 25
 #define CSN_PIN 28
+#define OUT EUSCI_A0_BASE
 
 RF24          radio(CE_PIN, CSN_PIN);
 const uint8_t address[][6] = {"1Node"};
 const byte    sampleText[6] = "hello";
-
 
 /* UART Configuration Parameter. These are the configuration parameters to
  * make the eUSCI A UART module to operate with a 2400 baud rate. These
@@ -79,23 +79,22 @@ void setupUART() {
     /* Setting DCO to 12MHz */
     CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_12);
 
-    MAP_UART_initModule(EUSCI_A0_BASE, &uartConfig);
-    MAP_UART_enableModule(EUSCI_A0_BASE);
+    MAP_UART_initModule(OUT, &uartConfig);
+    MAP_UART_enableModule(OUT);
 
-    UART_initModule(EUSCI_A0_BASE, &uartConfig);
-    UART_enableModule(EUSCI_A0_BASE);
+    UART_initModule(OUT, &uartConfig);
+    UART_enableModule(OUT);
 }
 
 // Add loop code
 void loop() {
-    char hello[7] = "hello\n";
-    printf(EUSCI_A0_BASE, hello);
     bool res = radio.isChipConnected();
+    printf(OUT, "Is the chip connected? %s\n", res ? "yes" : "no");
 
     transmitData(sampleText);
 }
 
 void transmitData(const byte *data) {
-    radio.stopListening(); // always enforce closure to be sure
+    radio.stopListening(); // always enforce closure just to be sure
     radio.write(&data, sizeof(data));
 }
