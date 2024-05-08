@@ -20,9 +20,8 @@
 #define CSN_PIN 28
 #define OUT EUSCI_A0_BASE
 
-RF24          radio(CE_PIN, CSN_PIN);
-const uint8_t address[][6] = {"1Node"};
-const byte    sampleText[6] = "hello";
+RF24       radio(CE_PIN, CSN_PIN);
+const byte sampleText[6] = "hello";
 
 /* UART Configuration Parameter. These are the configuration parameters to
  * make the eUSCI A UART module to operate with a 2400 baud rate. These
@@ -53,10 +52,15 @@ void setup() {
 }
 
 void setupRF24() {
-    radio.begin();
+    if (!radio.begin()) {
+        printf(OUT, "The radio hardware is not responding!");
+        while (1) {
+        }
+    }
 
     // opens a pipe for writing byte arrays
-    radio.openWritingPipe(address[0]);
+    uint8_t address[] = {0xCC, 0xCE, 0xCC, 0xCE, 0xCC};
+    radio.openWritingPipe(address);
 
     // power level for range. Keep at MIN to avoid issues
     // high power levels give too much power to near antennas
@@ -65,6 +69,12 @@ void setupRF24() {
 
     /* this should be used if we want to receive and not transmit */
     // radio.startListening();
+
+    if (!radio.isChipConnected()) {
+        printf(OUT, "The chip is not connected to the SPI!");
+        while (1) {
+        }
+    }
 }
 
 void setupUART() {
@@ -88,8 +98,10 @@ void setupUART() {
 
 // Add loop code
 void loop() {
-    bool res = radio.isChipConnected();
-    printf(OUT, "Is the chip connected? %s\n", res ? "yes" : "no");
+    // print debugging info. For now leave it here to know it's working.
+    char     buffer[870] = {'\0'};
+    uint16_t used_chars = radio.sprintfPrettyDetails(buffer);
+    printf(OUT, "%s\n\n", buffer);
 
     transmitData(sampleText);
 }
